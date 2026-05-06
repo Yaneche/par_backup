@@ -94,6 +94,41 @@ def copy_settings_between_furnaces(config):
     print("\n✅ Копирование завершено!")
 
 
+def show_help():
+    """Показать справку по программе"""
+    print("\n" + "="*60)
+    print("📖 СПРАВКА")
+    print("="*60)
+    print("""
+РЕЖИМЫ РАБОТЫ:
+  1. Сохранение настроек     -r
+  2. Восстановление настроек -w
+  3. Обзор дерева OPC UA     -b
+  4. Копирование между ПЛК    -c
+  5. Статистика файлов       -s
+  6. Экспорт YAML → CSV      (пункт меню 6)
+
+АРГУМЕНТЫ КОМАНДНОЙ СТРОКИ:
+  -r, --read      Режим чтения (сохранение настроек)
+  -w, --write     Режим записи (восстановление настроек)
+  -b, --browse    Режим обзора дерева OPC UA
+  -c, --copy      Режим копирования между ПЛК
+  --csv           Дополнительно создать CSV-файл при сохранении
+  --device NAME   Имя устройства (для неинтерактивного режима)
+  --blocks LIST   Список блоков через запятую (для неинтерактивного режима)
+  -h, --help      Показать эту справку
+
+ПРИМЕРЫ:
+  python Par_backup.py                    # Интерактивное меню
+  python Par_backup.py -r                 # Интерактивное сохранение
+  python Par_backup.py -w                 # Интерактивное восстановление
+  python Par_backup.py -r --csv           # Сохранение + CSV
+  python Par_backup.py -s                 # Показать статистику
+  python Par_backup.py --help             # Эта справка
+""")
+    print("="*60)
+
+
 def show_statistics():
     """Показать статистику по сохранённым файлам"""
     print("\n" + "="*60)
@@ -268,9 +303,10 @@ def main():
             print("4. 📤 Копировать настройки (ПЛК → ПЛК)")
             print("5. 📊 Статистика файлов")
             print("6. 📄 Экспорт YAML → CSV")
+            print("h. 📖 Справка")
             print("q. 🚪 Выход")
             
-            choice = input("\nВыбор (1-6/q): ").strip().lower()
+            choice = input("\nВыбор (1-6, h, q): ").strip().lower()
             
             if choice == "1":
                 mode = "read"
@@ -285,6 +321,9 @@ def main():
                 continue
             elif choice == "6":
                 export_yaml_to_csv()
+                continue
+            elif choice in ("h", "?"):
+                show_help()
                 continue
             elif choice == "q":
                 print("\n🔌 Выход.")
