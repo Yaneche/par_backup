@@ -11,17 +11,42 @@ def load_config():
             return json.load(f)
     config = {
         "devices": {
-            "1": {"name": "Колпаковая печь 1", "ip": "192.168.15.20"},
-            "2": {"name": "Колпаковая печь 2", "ip": "192.168.15.40"},
-            "3": {"name": "Колпаковая печь 3", "ip": "192.168.15.60"},
-            "4": {"name": "Колпаковая печь 4", "ip": "192.168.15.80"},
-            "5": {"name": "Сушильная камера 1", "ip": "192.168.15.100"},
-            "6": {"name": "Сушильная камера 2", "ip": "192.168.15.110"},
-            "7": {"name": "Сушильная камера 3", "ip": "192.168.15.120"},
+            "1": {"name": "PWC5", "ip": "192.168.9.6"},
+            "2": {"name": "KPVL_Master", "ip": "192.168.9.1"},
+            "3": {"name": "PWC6 насосы", "ip": "192.168.9.7"},
+            "4": {"name": "HTR_1", "ip": "192.168.9.2"},
+            "5": {"name": "HTR_2", "ip": "192.168.9.3"},
+            "6": {"name": "HTR_3", "ip": "192.168.9.4"},
+            "7": {"name": "HTR_4", "ip": "192.168.9.5"},
         },
         "port": 4840,
-        "endpoint_path": "/freeopcua/server",
-        "devices_paths": {}
+        "endpoint_path": "/",
+        "devices_paths": {
+            "192.168.9.6": [
+                {"path": "ns=4;s=|var|LicOS-PLC-EC201S.Application.Par_Db", "tags": 97, "name": "SelectedBlock"}
+            ],
+            "192.168.9.1": [
+                {"path": "ns=4;s=|var|PLC210 OPC-UA.Application.Par210_1", "tags": 15, "name": "Par210_1"},
+                {"path": "ns=4;s=|var|PLC210 OPC-UA.Application.Par210_2", "tags": 26, "name": "Par210_2"},
+                {"path": "ns=4;s=|var|PLC210 OPC-UA.Application.Par_Gen", "tags": 140, "name": "Par_Gen"},
+                {"path": "ns=4;s=|var|PLC210 OPC-UA.Application.Par_LineDrive", "tags": 150, "name": "Par_LineDrive"}
+            ],
+            "192.168.9.7": [
+                {"path": "ns=4;s=|var|PLC210 OPC-UA.Application.ParDb", "tags": 155, "name": "ParDb"}
+            ],
+            "192.168.9.5": [
+                {"path": "ns=4;s=|var|HTR4.Application.Par_Db", "tags": 89, "name": "Par_Db"}
+            ],
+            "192.168.9.2": [
+                {"path": "ns=4;s=|var|HTR1.Application.Par_Db", "tags": 89, "name": "Par_Db"}
+            ],
+            "192.168.9.3": [
+                {"path": "ns=4;s=|var|HTR2.Application.Par_Db", "tags": 89, "name": "Par_Db"}
+            ],
+            "192.168.9.4": [
+                {"path": "ns=4;s=|var|HTR3.Application.Par_Db", "tags": 89, "name": "Par_Db"}
+            ]
+        }
     }
     save_config(config)
     print(f"✅ Создан {CONFIG_FILE}")

@@ -115,6 +115,91 @@ def show_statistics():
         print(f"  {i}. {os.path.basename(f)} ({size:.1f} KB, {mtime})")
 
 
+def export_yaml_to_csv():
+    """Экспорт YAML файлов в CSV"""
+    print("\n" + "="*60)
+    print("📄 ЭКСПОРТ YAML → CSV")
+    print("="*60)
+    
+    yaml_files = glob.glob(os.path.join(PLC_DATA_DIR, "*.yaml"))
+    if not yaml_files:
+        print("❌ Нет YAML-файлов для экспорта")
+        return
+    
+    # Сортируем по времени (новые сверху)
+    yaml_files.sort(key=os.path.getmtime, reverse=True)
+    
+    print(f"\n📂 Доступные YAML-файлы (отсортированы по дате):")
+    for i, f in enumerate(yaml_files, 1):
+        size = os.path.getsize(f) / 1024
+        mtime = datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d %H:%M:%S")
+        print(f"  {i}. {os.path.basename(f)} ({size:.1f} KB, {mtime})")
+    
+    print("\nДоступные действия:")
+    print("  a - Экспортировать ВСЕ файлы")
+    print("  номера через пробел - выбрать файлы (например: 1 3 5)")
+    print("  q - Отмена")
+    
+    choice = input("\nВыбор: ").strip().lower()
+    
+    if choice == "q":
+        print("↩ Возврат в главное меню.")
+        return
+    
+    import yaml
+    
+    selected_files = []
+    
+    if choice == "a":
+        selected_files = yaml_files
+    else:
+        try:
+            indices = [int(x.strip()) - 1 for x in choice.split() if x.strip().isdigit()]
+            if not indices:
+                print("❌ Неверный выбор")
+                return
+            
+            for idx in indices:
+                if 0 <= idx < len(yaml_files):
+                    selected_files.append(yaml_files[idx])
+                else:
+                    print(f"⚠ Номер {idx+1} вне диапазона")
+            
+            if not selected_files:
+                print("❌ Не выбрано ни одного файла")
+                return
+        except:
+            print("❌ Ошибка при выборе файлов")
+            return
+    
+    # Экспортируем выбранные файлы
+    exported_count = 0
+    for filepath in selected_files:
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                tree = yaml.safe_load(f)
+            
+            if not tree:
+                print(f"⚠ Пропущен пустой файл: {os.path.basename(filepath)}")
+                continue
+            
+            flat_tags = flatten_tree(tree)
+            csv_path = os.path.splitext(filepath)[0] + ".csv"
+            
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                w = csv.writer(f)
+                w.writerow(["Path", "Value", "NodeId"])
+                for path, data in flat_tags.items():
+                    w.writerow([path, str(data["value"]), data["nodeid"]])
+            
+            print(f"✅ Экспортирован: {os.path.basename(csv_path)}")
+            exported_count += 1
+        except Exception as e:
+            print(f"❌ Ошибка при экспорте {os.path.basename(filepath)}: {e}")
+    
+    print(f"\n📊 Экспортировано файлов: {exported_count}/{len(selected_files)}")
+
+
 def main():
     os.makedirs(DATA_ROOT, exist_ok=True)
     os.makedirs(PLC_DATA_DIR, exist_ok=True)
@@ -146,6 +231,7 @@ def main():
   3. Обзор дерева OPC UA     -b
   4. Копирование между ПЛК    -c
   5. Статистика файлов       -s
+  6. Экспорт YAML → CSV      (только в интерактивном меню)
 
 ПРИМЕРЫ:
   python Par_backup.py -r                    # Интерактивное сохранение
@@ -180,9 +266,10 @@ def main():
             print("3. 🌲 Обзор дерева OPC UA")
             print("4. 📤 Копировать настройки (ПЛК → ПЛК)")
             print("5. 📊 Статистика файлов")
+            print("6. 📄 Экспорт YAML → CSV")
             print("q. 🚪 Выход")
             
-            choice = input("\nВыбор (1-5/q): ").strip().lower()
+            choice = input("\nВыбор (1-6/q): ").strip().lower()
             
             if choice == "1":
                 mode = "read"
@@ -194,6 +281,9 @@ def main():
                 mode = "copy"
             elif choice == "5":
                 show_statistics()
+                continue
+            elif choice == "6":
+                export_yaml_to_csv()
                 continue
             elif choice == "q":
                 print("\n🔌 Выход.")
