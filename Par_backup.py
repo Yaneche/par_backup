@@ -5,6 +5,7 @@ import argparse
 import sys
 import os
 import glob
+import csv
 from datetime import datetime
 
 from par_tools.config_io import load_config, select_device
