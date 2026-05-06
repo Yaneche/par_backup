@@ -3,7 +3,6 @@
 
 import os
 import csv
-import json
 import time
 
 from par_tools.opcua_client import (
@@ -316,23 +315,22 @@ def run_read_mode(config, device, args):
         
         tree = read_paths_tags(client, all_paths)
         
-        # Сохраняем результат
+        # Проверяем, удалось ли прочитать данные
+        if tree is None:
+            print("\n❌ Сохранение отменено: не удалось получить данные от ПЛК")
+            return
+        
+        # Сохраняем результат в YAML
         flat_tags = flatten_tree(tree)
-        json_path = get_filename(device)
-        os.makedirs(os.path.dirname(json_path), exist_ok=True)
+        yaml_path = get_filename(device)
+        os.makedirs(os.path.dirname(yaml_path), exist_ok=True)
         
-        # JSON — древовидный
-        with open(json_path, "w", encoding="utf-8") as f:
-            json.dump(tree, f, ensure_ascii=False, indent=2)
-        print(f"\n💾 Сохранено {len(flat_tags)} тегов → {os.path.basename(json_path)}")
-        
-        # YAML — то же дерево
-        yaml_path = os.path.splitext(json_path)[0] + ".yaml"
         save_tags_yaml(tree, os.path.dirname(yaml_path), os.path.basename(yaml_path))
+        print(f"\n💾 Сохранено {len(flat_tags)} тегов → {os.path.basename(yaml_path)}")
         
-        # CSV — по желанию
+        # CSV — по желанию (только если данные успешно прочитаны)
         if hasattr(args, 'csv') and args.csv:
-            csv_path = os.path.splitext(json_path)[0] + ".csv"
+            csv_path = os.path.splitext(yaml_path)[0] + ".csv"
             with open(csv_path, "w", newline="", encoding="utf-8") as f:
                 w = csv.writer(f)
                 w.writerow(["Path", "Value", "NodeId"])
@@ -342,7 +340,6 @@ def run_read_mode(config, device, args):
         
         # Выводим статистику по блокам
         print("\n📊 СТАТИСТИКА ПО БЛОКАМ:")
-        # Выводим статистику по блокам
         for block_path in all_paths:
             block_name = block_path.get('name', 'Unknown')
             block_tags = block_path.get('tags', '?')
