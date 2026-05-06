@@ -106,22 +106,22 @@ def select_multiple_blocks(client, device_ip):
                 print(f"  {i}. {name} (~{tags} тегов)")
         
         print("\nДоступные действия:")
-        print("  a - Добавить новый блок (обход дерева)")
-        print("  d - Удалить блок")
-        print("  s - Сохранить все блоки и продолжить")
-        print("  c - Очистить все блоки")
+        print("  1 - Сохранить все блоки и продолжить")
+        print("  2 - Добавить новый блок (обход дерева)")
+        print("  3 - Удалить блок")
+        print("  4 - Очистить все блоки")
         print("  q - Отмена")
         
-        choice = input("\nВыбор (a/d/s/c/q): ").strip().lower()
+        choice = input("\nВыбор (1-4/q): ").strip().lower()
         
-        if choice == "a":
+        if choice == "2":
             new_paths = _add_new_block_via_tree(client, saved_paths)
             if new_paths is not None:
                 saved_paths = new_paths
                 save_device_paths(config, device_ip, saved_paths)
                 print(f"✅ Сохранено {len(saved_paths)} блок(ов) в конфиг")
         
-        elif choice == "d":
+        elif choice == "3":
             if not saved_paths:
                 print("❌ Нет блоков для удаления")
                 continue
@@ -129,7 +129,7 @@ def select_multiple_blocks(client, device_ip):
             if saved_paths is not None:
                 save_device_paths(config, device_ip, saved_paths)
         
-        elif choice == "c":
+        elif choice == "4":
             if saved_paths:
                 confirm = input(f"⚠ Удалить все {len(saved_paths)} блок(ов)? (y/N): ").strip().lower()
                 if confirm in ("y", "yes", "д", "да"):
@@ -137,7 +137,7 @@ def select_multiple_blocks(client, device_ip):
                     save_device_paths(config, device_ip, saved_paths)
                     print("✅ Все блоки удалены")
         
-        elif choice == "s":
+        elif choice == "1":
             if not saved_paths:
                 print("❌ Нет блоков для сохранения. Сначала добавьте хотя бы один блок.")
                 continue
