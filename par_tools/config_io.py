@@ -103,4 +103,4 @@ def get_filename(device):
     os.makedirs(PLC_DATA_DIR, exist_ok=True)
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     safe_name = re.sub(r"[^\w\s-]", "", device["name"]).strip().replace(" ", "_")
-    return os.path.join(PLC_DATA_DIR, f"{safe_name}-{device['ip']}-{timestamp}.json")
+    return os.path.join(PLC_DATA_DIR, f"{safe_name}-{device['ip']}-{timestamp}.yaml")

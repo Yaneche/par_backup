@@ -442,8 +442,10 @@ def simplify_path(full_path, block_name):
 def read_paths_tags(client, paths):
     """
     Возвращает дерево, где каждый блок - отдельный корневой узел.
+    Возвращает None, если ни один блок не удалось прочитать.
     """
     all_tags = {}
+    success_count = 0
     start = time.time()
 
     for idx, p in enumerate(paths, 1):
@@ -454,6 +456,10 @@ def read_paths_tags(client, paths):
         try:
             node = client.get_node(path)
             block_tags = read_block_tags(client, node, block_label=block_name)
+            
+            if not block_tags:
+                print(f"⚠ Блок {block_name} пуст или не содержит тегов")
+                continue
             
             # Упрощаем пути тегов
             for tag_path, tag_data in block_tags.items():
@@ -467,12 +473,24 @@ def read_paths_tags(client, paths):
                         simplified = block_name + parts[1]
                 
                 all_tags[simplified] = tag_data
+            
+            success_count += 1
+            print(f"✅ Прочитано {len(block_tags)} тегов")
                 
         except Exception as e:
             print(f"❌ Ошибка блока {path}: {e}")
 
     elapsed = time.time() - start
     print(f"⏱ Чтение завершено за {elapsed:.2f} с")
+    
+    # Проверяем, были ли успешно прочитанные блоки
+    if success_count == 0:
+        print("\n❌ НЕ УДАЛОСЬ ПРОЧИТАТЬ НИ ОДИН БЛОК. Файл не будет сохранён.")
+        return None
+    
+    if not all_tags:
+        print("\n❌ Данные не получены (пустой результат). Файл не будет сохранён.")
+        return None
 
     # Строим дерево
     tree = build_tree_from_flat(all_tags)
