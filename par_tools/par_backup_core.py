@@ -106,22 +106,29 @@ def select_multiple_blocks(client, device_ip):
                 print(f"  {i}. {name} (~{tags} тегов)")
         
         print("\nДоступные действия:")
-        print("  1 - Сохранить все блоки и продолжить")
-        print("  2 - Добавить новый блок (обход дерева)")
-        print("  3 - Удалить блок")
-        print("  4 - Очистить все блоки")
+        print("  Enter - Продолжить с текущими блоками")
+        print("  a - Добавить новый блок (обход дерева)")
+        print("  d - Удалить блок")
+        print("  c - Очистить все блоки")
         print("  q - Отмена")
         
-        choice = input("\nВыбор (1-4/q): ").strip().lower()
+        choice = input("\nВыбор (Enter/a/d/c/q): ").strip().lower()
         
-        if choice == "2":
+        if choice == "":
+            # Enter = продолжить
+            if not saved_paths:
+                print("❌ Нет блоков для сохранения. Сначала добавьте хотя бы один блок.")
+                continue
+            return saved_paths
+        
+        elif choice == "a":
             new_paths = _add_new_block_via_tree(client, saved_paths)
             if new_paths is not None:
                 saved_paths = new_paths
                 save_device_paths(config, device_ip, saved_paths)
                 print(f"✅ Сохранено {len(saved_paths)} блок(ов) в конфиг")
         
-        elif choice == "3":
+        elif choice == "d":
             if not saved_paths:
                 print("❌ Нет блоков для удаления")
                 continue
@@ -129,19 +136,13 @@ def select_multiple_blocks(client, device_ip):
             if saved_paths is not None:
                 save_device_paths(config, device_ip, saved_paths)
         
-        elif choice == "4":
+        elif choice == "c":
             if saved_paths:
                 confirm = input(f"⚠ Удалить все {len(saved_paths)} блок(ов)? (y/N): ").strip().lower()
                 if confirm in ("y", "yes", "д", "да"):
                     saved_paths = []
                     save_device_paths(config, device_ip, saved_paths)
                     print("✅ Все блоки удалены")
-        
-        elif choice == "1":
-            if not saved_paths:
-                print("❌ Нет блоков для сохранения. Сначала добавьте хотя бы один блок.")
-                continue
-            return saved_paths
         
         elif choice == "q":
             return None
@@ -338,12 +339,22 @@ def run_read_mode(config, device, args):
                     w.writerow([path, str(data["value"]), data["nodeid"]])
             print(f"📊 CSV сохранён: {os.path.basename(csv_path)}")
         
-        # Выводим статистику по блокам
+        # Выводим статистику по блокам с АКТУАЛЬНЫМ количеством тегов из дерева
         print("\n📊 СТАТИСТИКА ПО БЛОКАМ:")
         for block_path in all_paths:
             block_name = block_path.get('name', 'Unknown')
-            block_tags = block_path.get('tags', '?')
-            print(f"  • {block_name}: {block_tags} тегов")
+            # Берём фактическое количество тегов из прочитанного дерева
+            if block_name in tree:
+                flat_block = flatten_tree({block_name: tree[block_name]})
+                actual_count = len(flat_block)
+                # Обновляем количество тегов в списке путей для сохранения в конфиг
+                block_path['tags'] = actual_count
+            else:
+                actual_count = block_path.get('tags', '?')
+            print(f"  • {block_name}: {actual_count} тегов")
+        
+        # Сохраняем обновлённые пути с актуальным количеством тегов в конфиг
+        save_device_paths(config, device["ip"], all_paths)
         
     except Exception as e:
         print(f"❌ Ошибка: {e}")
@@ -429,7 +440,7 @@ def run_write_mode(config, device, args):
         print(f"  {i}. {block} ({len(flat_block)} тегов)")
     
     print("\nДоступные действия:")
-    print("  a - Восстановить ВСЕ блоки")
+    print("  Enter - Восстановить ВСЕ блоки")
     print("  номера через пробел - восстановить выбранные блоки (например: 1 3 5)")
     print("  q - Отмена")
     
@@ -439,7 +450,7 @@ def run_write_mode(config, device, args):
         print("↩ Возврат в главное меню.")
         return
     
-    if choice == "a":
+    if choice == "" or choice == "a":
         selected_tree = tree
         selected_blocks = root_blocks
     else:
