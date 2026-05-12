@@ -129,8 +129,22 @@ def show_help():
     print("="*60)
 
 
+def flatten_tree_for_stats(tree, prefix=""):
+    """Вспомогательная функция для подсчёта тегов в YAML"""
+    flat = {}
+    def _walk(node, cur_path):
+        if isinstance(node, dict) and "value" in node and "nodeid" in node:
+            flat[".".join(cur_path)] = node
+            return
+        if isinstance(node, dict):
+            for k, v in node.items():
+                _walk(v, cur_path + [k])
+    _walk(tree, [prefix] if prefix else [])
+    return flat
+
+
 def show_statistics():
-    """Показать статистику по сохранённым файлам"""
+    """Показать статистику по сохранённым файлам с актуальным количеством тегов"""
     print("\n" + "="*60)
     print("📊 СТАТИСТИКА СОХРАНЁННЫХ ФАЙЛОВ")
     print("="*60)
@@ -145,10 +159,36 @@ def show_statistics():
     print("\nПоследние 10 файлов:")
     
     yaml_files.sort(key=os.path.getmtime, reverse=True)
+    
+    import yaml
+    
     for i, f in enumerate(yaml_files[:10], 1):
         size = os.path.getsize(f) / 1024
         mtime = datetime.fromtimestamp(os.path.getmtime(f)).strftime("%Y-%m-%d %H:%M:%S")
-        print(f"  {i}. {os.path.basename(f)} ({size:.1f} KB, {mtime})")
+        
+        # Читаем YAML для подсчёта актуального количества тегов
+        try:
+            with open(f, 'r', encoding='utf-8') as file:
+                tree = yaml.safe_load(file)
+            
+            if tree:
+                flat_tags = flatten_tree_for_stats(tree)
+                tag_count = len(flat_tags)
+                
+                # Получаем имена блоков
+                block_names = list(tree.keys())
+                blocks_info = f"{len(block_names)} блок(ов)"
+                if len(block_names) <= 3:
+                    blocks_info = ", ".join(block_names)
+            else:
+                tag_count = 0
+                blocks_info = "пустой файл"
+        except Exception as e:
+            tag_count = "?"
+            blocks_info = f"ошибка чтения: {e}"
+        
+        print(f"  {i}. {os.path.basename(f)} ({tag_count} тегов, {blocks_info})")
+        print(f"     размер: {size:.1f} KB, дата: {mtime}")
 
 
 def export_yaml_to_csv():
