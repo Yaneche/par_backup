@@ -585,4 +585,4 @@ def write_tags(client, data_dir, filename, batch_size=50):
     elapsed = time.time() - start
     print(f"📊 Записано: {written}/{total} тегов")
     print(f"⏱ Запись завершена за {elapsed:.2f} с")
-    return True
+    return written == total
